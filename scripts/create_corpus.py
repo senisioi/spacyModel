@@ -6,6 +6,7 @@ from collections import Counter
 from pathlib import Path
 import spacy
 from spacy.tokens import DocBin, Span
+import unicodedata
 
 
 # citesti tot jsonul tau, nu mai faci conversie
@@ -14,17 +15,21 @@ def make_doc_bin(json_train_sau_test: Path, nlp_dir: Path, out_path: Path):
     nlp = spacy.load(nlp_dir, exclude="parser, tagger")
     docs = DocBin()
     gold_ids = []
+    failed_entities = 0
 
     # Load JSON data
     with open(json_train_sau_test, 'r', encoding='utf-8') as file:
         json_data = json.load(file)
     for elem in json_data:
-        sentence = elem["Context"]
+        # sentence = elem["Context"]
+        sentence = unicodedata.normalize('NFC', elem["Context"])
         # print(sentence)
         doc = nlp.make_doc(sentence)
         # print(doc)
         # print()
         start = elem["Start"]
+        if start <0 :
+            continue
         stop = elem["Stop"]
         link_ref = elem["Link_Ref"]
         gold_ids.append(link_ref)
@@ -38,16 +43,22 @@ def make_doc_bin(json_train_sau_test: Path, nlp_dir: Path, out_path: Path):
         if entity is not None:
             doc.ents = [entity]
         else:
-            print(f"Failed to create entity from {start} to {stop} in context: {sentence[:50]}...")
+            failed_entities +=1
+            # print(f"Failed to create entity from {start} to {stop} in context: {sentence[:50]}...")
+            print(f"Failed to create entity from {start} to {stop} in context: {sentence[start:stop]}")
+            print(f"Failed to create entity {link_ref}")
             continue
 
+        #
         for i, token in enumerate(doc):
             doc[i].is_sent_start = i == 0
         docs.add(doc)
+        # print(doc)
+        # print()
 
-    print("Statistics of manually annotated data:")
-    print(Counter(gold_ids))
-    print()
+    # print("Statistics of manually annotated data:")
+    # print(Counter(gold_ids))
+    # print(failed_entities)
     docs.to_disk(out_path)
 
 

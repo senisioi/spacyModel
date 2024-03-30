@@ -1,10 +1,55 @@
-import typer
 import csv
+import json
 import os
+from collections import OrderedDict, Counter
 from pathlib import Path
 
+import numpy as np
 import spacy
 from spacy.kb import InMemoryLookupKB
+
+
+def buildEntities(cale_fisier1 = "../scripts/all_datas_test_v2.json", cale_fisier2 = "../scripts/all_datas_training_v2.json", cale_fisier_iesire="../assets/entities.csv"):
+    data = []
+
+    for cale_fisier in [cale_fisier1, cale_fisier2]:
+        with open(cale_fisier, 'r', encoding='utf-8') as fisier:
+            data.extend(json.load(fisier))
+    linkuri_unice = OrderedDict()
+
+    for element in data:
+        link_ref = element.get('Link_Ref', '')
+        # Verificăm dacă linkul a fost deja adăugat pentru a asigura unicitatea
+        if link_ref not in linkuri_unice:
+            linkuri_unice[link_ref] = f'"{link_ref}","{element["Titlu_Ref_Clean"]}","{element["Titlu_link_Ref"]}"\n'
+
+    with open(cale_fisier_iesire, 'w', encoding='utf-8') as fisier_iesire:
+        for linie in linkuri_unice.values():
+            fisier_iesire.write(linie)
+
+
+def buildMentionsAmbiguity():
+    data = []
+    for cale_fisier in ['all_datas_training_v2.json', 'all_datas_test_v2.json']:
+        with open(cale_fisier, 'r', encoding='utf-8') as fisier:
+            data.extend(json.load(fisier))
+
+    mentions_dict = {}
+    for item in data:
+        mention = item['Mention']
+        link_ref = item['Link_Ref']
+        mentions_dict.setdefault(mention, set()).add(link_ref)
+
+    #  Convert Sets to Lists
+    for mention in mentions_dict:
+        mentions_dict[mention] = list(mentions_dict[mention])
+
+    # print(mentions_dict)
+    return mentions_dict
+
+    # Write to a JSON File
+    # with open('mentions_to_links.json', 'w', encoding='utf-8') as outfile:
+    #     json.dump(mentions_dict, outfile, ensure_ascii=False, indent=4)
 
 
 def main(entities_loc: Path, vectors_model: str, kb_loc: Path, nlp_dir: Path):
@@ -23,28 +68,31 @@ def main(entities_loc: Path, vectors_model: str, kb_loc: Path, nlp_dir: Path):
     kb = InMemoryLookupKB(vocab=nlp.vocab, entity_vector_length=280)
 
     # TODO:
-    iei toate titlurile unice
-    adaugi Lin_Ref coresp fiecarui titlu
+    # iei toate titlurile unice
+    # adaugi Lin_Ref coresp fiecarui titlu
+    # DONE
 
-    #kb.add_entity(entity=link_ref, entity_vector=desc_enc, freq=342)
-    for qid, titlu in name_dict.items():
+    # kb.add_entity(entity=link_ref, entity_vector=desc_enc, freq=342)
+    for link, titlu in name_dict.items():
         desc_doc = nlp(titlu)
         desc_enc = desc_doc.vector
         # Set arbitrary value for frequency
-        kb.add_entity(entity=qid, entity_vector=desc_enc, freq=342)
+        kb.add_entity(entity=link, entity_vector=desc_enc, freq=280)
 
-    iei toate mentiunile unice si pentru fiecare mentiune
-    faci o lista cu toate Link_Ref (qid)
-    mentiune
-    lista_de_link_ref_pt_mentiune
-    ctr = Counter(lista_de_link_ref_pt_mentiune)
-    frecv = np.array(list(ctr.values()))
-    proba = frecv/frecv.sum()
-    kb.add_alias(alias=mentiune, entities=lista_de_link_ref_pt_mentiune, probabilities= proba)
+    # iei toate mentiunile unice si pentru fiecare mentiune
+    # faci o lista cu toate Link_Ref (qid)
+    # mentiune
+    # lista_de_link_ref_pt_mentiune
+    mention_dict = buildMentionsAmbiguity()
+    print(mention_dict)
+    for mention, links_list in mention_dict.items():
+        ctr = Counter(links_list)
+        frecv = np.array(list(ctr.values()))
+        probability = frecv / frecv.sum()
+        kb.add_alias(alias=mention, entities=links_list, probabilities=probability)
     for qid, name in name_dict.items():
         # set 100% prior probability P(entity|alias) for each unique name
-        kb.add_alias(alias=mentiune, entities=[qid], probabilities=[1])
-
+        kb.add_alias(alias=mention, entities=[qid], probabilities=[1])
 
     print(f"Entities in the KB: {kb.get_entity_strings()}")
     print(f"Aliases in the KB: {kb.get_alias_strings()}")
@@ -72,6 +120,7 @@ def _load_entities(entities_loc: Path):
 
 if __name__ == "__main__":
     print(os.getcwd())
+    buildEntities( "../scripts/all_datas_test_v2.json", "../scripts/all_datas_training_v2.json", "../assets/entities.csv")
     main(entities_loc=Path("../assets/entities.csv"), vectors_model="ro_legal_fl", kb_loc="/temp/my_kb",
          nlp_dir="/temp/nlp_dir")
-   # typer.run(main)
+# typer.run(main)

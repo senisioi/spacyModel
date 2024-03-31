@@ -6,17 +6,23 @@ from pathlib import Path
 import spacy
 from spacy.tokens import DocBin, Span
 
+def add_kb_id():
+    if not Span.has_extension("kb_id"):
+        Span.set_extension("kb_id", default=None)
 
 # Function to align character spans with tokens
-def align_span_to_tokens(doc, start_char, end_char, label):
+def align_span_to_tokens(doc, start_char, end_char, kb_id, label):
     start_token, end_token = None, None
+    add_kb_id()
     for token in doc:
         if start_char >= token.idx and (start_token is None or start_char < token.idx + len(token)):
             start_token = token.i
         if end_char <= token.idx + len(token.text) and (end_token is None or end_char > token.idx):
             end_token = token.i + 1
     if start_token is not None and end_token is not None and start_token < end_token:
-        return Span(doc, start_token, end_token, label=label)
+        span = Span(doc, start_token, end_token, label=label)
+        span._.kb_id = kb_id  # Setează kb_id ca un atribut custom al span-ului
+        return span
     else:
         return None
 
@@ -54,12 +60,12 @@ def make_doc_bin(json_train_sau_test: Path, nlp_dir: Path, out_path: Path):
         #     stop,
         #     label = 'LEGAL',
         #     kb_id = link_ref,
-        #     alignment_mode='contract'
         # )
 
-        entity =align_span_to_tokens(doc, start, stop, "LEGAL")
+        entity =align_span_to_tokens(doc, start, stop, kb_id=link_ref, label="LEGAL")
         if entity is not None:
-            doc.ents = [entity]
+            print(entity)
+            print()
         else:
             failed_entities +=1
             print(f"Context: {sentence}")

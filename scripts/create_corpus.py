@@ -6,29 +6,9 @@ from pathlib import Path
 import spacy
 from spacy.tokens import DocBin, Span
 
-def add_kb_id():
-    if not Span.has_extension("kb_id"):
-        Span.set_extension("kb_id", default=None)
-
-# Function to align character spans with tokens
-def align_span_to_tokens(doc, start_char, end_char, kb_id, label):
-    start_token, end_token = None, None
-    add_kb_id()
-    for token in doc:
-        if start_char >= token.idx and (start_token is None or start_char < token.idx + len(token)):
-            start_token = token.i
-        if end_char <= token.idx + len(token.text) and (end_token is None or end_char > token.idx):
-            end_token = token.i + 1
-    if start_token is not None and end_token is not None and start_token < end_token:
-        span = Span(doc, start_token, end_token, label=label)
-        span._.kb_id = kb_id  # Setează kb_id ca un atribut custom al span-ului
-        return span
-    else:
-        return None
 
 # citesti tot jsonul tau, nu mai faci conversie
 def make_doc_bin(json_train_sau_test: Path, nlp_dir: Path, out_path: Path):
-    # nlp = spacy.load(nlp_dir, exclude="parser, tagger")
     nlp = spacy.load(nlp_dir, exclude="parser, tagger")
     docs = DocBin()
     gold_ids = []
@@ -42,30 +22,25 @@ def make_doc_bin(json_train_sau_test: Path, nlp_dir: Path, out_path: Path):
     # Creare lista colectat entitati
     ent = []
     for elem in json_data:
-        # sentence = elem["Context"]
         sentence =elem["Context"]
-        # print(sentence)
         doc = nlp.make_doc(sentence)
-        # print(doc)
-        # print()
         start = elem["Start"]
         if start <0 :
             continue
         stop = elem["Stop"]
         link_ref = elem["Link_Ref"]
         gold_ids.append(link_ref)
-        # gold_ids.append(link_ref)
-        # entity = doc.char_span(
-        #     start,
-        #     stop,
-        #     label = 'LEGAL',
-        #     kb_id = link_ref,
-        # )
+        entity = doc.char_span(
+            start,
+            stop,
+            label = 'LEGAL',
+            alignment_mode='expand',
+            kb_id = link_ref
+        )
 
-        entity =align_span_to_tokens(doc, start, stop, kb_id=link_ref, label="LEGAL")
+        # entity =align_span_to_tokens(doc, start, stop, kb_id=link_ref, label="LEGAL")
         if entity is not None:
-            print(entity)
-            print()
+            doc.ents = [entity]
         else:
             failed_entities +=1
             print(f"Context: {sentence}")
@@ -74,7 +49,6 @@ def make_doc_bin(json_train_sau_test: Path, nlp_dir: Path, out_path: Path):
             print(f"Failed to create entity {link_ref}")
             print()
             continue
-        # doc.ents = ents
 
         #
         for i, token in enumerate(doc):

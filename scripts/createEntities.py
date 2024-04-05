@@ -10,7 +10,6 @@ def proceseaza_si_scrie_date(cale_fisier1, cale_fisier2, cale_fisier_iesire):
 
     for element in data:
         link_ref = element.get('Link_Ref', '')
-        # Verificăm dacă linkul a fost deja adăugat pentru a asigura unicitatea
         if link_ref not in linkuri_unice:
             linkuri_unice[link_ref] = f'"{link_ref}","{element["Titlu_Ref_Clean"]}","{element["Titlu_link_Ref"]}"\n'
 

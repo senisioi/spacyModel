@@ -24,19 +24,20 @@ def main(nlp_dir: Path, dev_set: Path):
     for example in examples:
         print(example.text)
         print(f"Gold annotation: {example.reference.ents[0].kb_id_}")
+        print(f"Gold annotation: {example.reference.ents[0]}")
         print(f"Predicted annotation: {example.predicted.ents[0].kb_id_}")
         print()
 
     print()
     print("RUNNING THE PIPELINE ON UNSEEN TEXT:")
-    text = "Tennis champion Emerson was expected to win Wimbledon."
-    doc = nlp(text)
-    print(text)
-    for ent in doc.ents:
-        print(ent.text, ent.label_, ent.kb_id_)
+    # text = "Tennis champion Emerson was expected to win Wimbledon."
+    # doc = nlp(text)
+    # print(text)
+    # for ent in doc.ents:
+    #     print(ent.text, ent.label_, ent.kb_id_)
     print()
 
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    main(Path("../temp/my_nlp"), Path('../corpus/all_datas_test_v2.json'))

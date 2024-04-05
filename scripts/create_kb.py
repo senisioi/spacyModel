@@ -120,7 +120,7 @@ def _load_entities(entities_loc: Path):
 
 if __name__ == "__main__":
     print(os.getcwd())
-    buildEntities( "../scripts/all_datas_test_v2.json", "../scripts/all_datas_training_v2.json", "../assets/entities.csv")
+    buildEntities( "all_datas_test_v2.json", "all_datas_training_v2.json", "../assets/entities.csv")
     main(entities_loc=Path("../assets/entities.csv"), vectors_model="ro_legal_fl", kb_loc="/temp/my_kb",
-         nlp_dir="/temp/nlp_dir")
+         nlp_dir="/temp/my_nlp")
 # typer.run(main)

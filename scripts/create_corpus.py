@@ -7,7 +7,6 @@ import spacy
 from spacy.tokens import DocBin, Span
 
 
-# citesti tot jsonul tau, nu mai faci conversie
 def make_doc_bin(json_train_sau_test: Path, nlp_dir: Path, out_path: Path):
     nlp = spacy.load(nlp_dir, exclude="parser, tagger")
     docs = DocBin()
@@ -18,9 +17,6 @@ def make_doc_bin(json_train_sau_test: Path, nlp_dir: Path, out_path: Path):
     with open(json_train_sau_test, 'r', encoding='utf-8') as file:
         json_data = json.load(file)
 
-
-    # Creare lista colectat entitati
-    ent = []
     for elem in json_data:
         sentence =elem["Context"]
         doc = nlp.make_doc(sentence)
@@ -60,6 +56,8 @@ def make_doc_bin(json_train_sau_test: Path, nlp_dir: Path, out_path: Path):
     print("Statistics of manually annotated data:")
     print(Counter(gold_ids))
     print(failed_entities)
+    print()
+    # print("Statistics of manually annotated data:", len(gold_ids))
     docs.to_disk(out_path)
 
 

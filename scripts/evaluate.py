@@ -24,25 +24,20 @@ def main(nlp_dir: Path, dev_set: Path):
         for doc in docs:
             examples.append(Example(nlp(doc.text), doc))
 
-    # print()
-    # print("RESULTS ON THE DEV SET:")
-    # for example in examples:
-    #     # print(example.text)
-    #     print(f"Gold annotation: {example.reference.ents[0].kb_id_}")
-    #     print(f"Gold annotation: {example.reference.ents[0]}")
-    #     print(f"Predicted annotation: {example.predicted.ents[0].kb_id_}")
-    #     print()
     print("\nRESULTS ON THE DEV SET:")
     for example in examples:
         total_predictions += 1
-        if example.reference.ents and example.predicted.ents:
+        if example.predicted.ents:
             print(f"Gold annotation: {example.reference.ents[0].kb_id_}")
             print(f"Mention: {example.reference.ents[0]}")
             print(f"Predicted annotation: {example.predicted.ents[0].kb_id_}")
             if example.reference.ents[0].kb_id_ == example.predicted.ents[0].kb_id_:
                 correct_predictions += 1
         else:
-            print("No entities to display.")
+            # print(f"Example {example}")
+            print("Gold Id" + str(example.reference.ents[0].kb_id_))
+            print(f"Mention: {example.reference.ents[0]}")
+            print("Predictie " + str(example.predicted.ents))
             no_entity +=1
         print()
 

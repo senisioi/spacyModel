@@ -2,7 +2,7 @@ import spacy
 
 nlp = spacy.blank("ro")
 
-spacy_file = '../corpus/dev_train.spacy'
+spacy_file = '../corpus/dev_test.spacy'
 
 doc_bin = spacy.tokens.DocBin().from_disk(spacy_file)
 docs = list(doc_bin.get_docs(nlp.vocab))

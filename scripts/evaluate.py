@@ -43,7 +43,7 @@ def main(nlp_dir: Path, dev_set: Path):
 
     print()
     print("RUNNING THE PIPELINE ON UNSEEN TEXT:")
-    accuracy = correct_predictions / (total_predictions - no_entity)
+    accuracy = correct_predictions / (total_predictions)
     print("Correct predinctions  " + str(correct_predictions))
     print("Total predinctions  " + str(total_predictions))
     print("No entity  " + str(no_entity))
